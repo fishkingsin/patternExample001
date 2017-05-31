@@ -5,7 +5,7 @@ int col = 6;
 int row = 6;
 int strokeLength = 100;
 int pattenrSapce = 200;
-float decay = 5.0;
+float __decay = 5.0;
 void drawTri(int tx , int ty)
 {
     for( int i = 0 ; i < numStroke ; i++)
@@ -30,7 +30,7 @@ void ofApp::setup(){
     gui->addIntSlider("ROW", 0, 20,&row);
     gui->addIntSlider("STROKE_LEN", 0, 200,&strokeLength);
     gui->addIntSlider("PATTERN_SPACE", 0, 400,&pattenrSapce);
-    gui->addSlider("decay", 0, 200,&decay);
+    gui->addSlider("decay", 0, 200,&__decay);
     ofAddListener(gui->newGUIEvent,this,&ofApp::guiEvent);
     for(int i = 0 ; i < numPattern ; i++)
     {
@@ -47,6 +47,7 @@ void ofApp::setup(){
         }
     }
     vbo = mesh;
+    gui->saveSettings("setting.xml");
 }
 void ofApp::guiEvent(ofxUIEventArgs &e)
 {
@@ -84,7 +85,6 @@ void ofApp::guiEvent(ofxUIEventArgs &e)
 
     }
 
-
 }
 //--------------------------------------------------------------
 void ofApp::update(){
@@ -94,7 +94,7 @@ void ofApp::update(){
     {
         float tx = (i%col)*(pattenrSapce);
         float ty = (i/row)*pattenrSapce;
-        float r = ofGetFrameNum()/decay*(((i/row)%2==0)?-1:1);
+        float r = ofGetFrameNum()/__decay*(((i/row)%2==0)?-1:1);
         for( int j = 0 ; j < numStroke ; j++)
         {
 
@@ -127,9 +127,14 @@ void ofApp::draw(){
 void ofApp::keyPressed(int key){
     switch(key)
     {
-            case 'h':
+            case 'f':
+            ofToggleFullscreen();
+            break;
+            case OF_KEY_TAB:
             gui->toggleVisible();
             break;
+            case 's':
+            gui->saveSettings("setting.xml");
     }
 }
 
