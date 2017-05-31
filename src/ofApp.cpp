@@ -18,6 +18,8 @@ void drawTri(int tx , int ty)
 }
 //--------------------------------------------------------------
 void ofApp::setup(){
+    
+    mesh.setMode(OF_PRIMITIVE_LINES);
     ofEnableSmoothing();
     ofSetLineWidth(10);
     gui = new ofxUISuperCanvas("SETTING", 0, 0, 300, 768);
@@ -29,20 +31,84 @@ void ofApp::setup(){
     gui->addIntSlider("STROKE_LEN", 0, 200,&strokeLength);
     gui->addIntSlider("PATTERN_SPACE", 0, 400,&pattenrSapce);
     gui->addSlider("decay", 0, 200,&decay);
-
-    ofSetVerticalSync(true);
-    
-//    glEnable(GL_DEPTH_TEST); //enable depth comparisons and update the depth buffer
-    ofDisableArbTex(); //needed for textures to work with gluSphere
-    fbo.allocate(ofGetWidth(),ofGetHeight(),GL_RGB);
-    //prepare quadric for sphere
-    quadric = gluNewQuadric();
-    gluQuadricTexture(quadric, GL_TRUE);
-    gluQuadricNormals(quadric, GLU_SMOOTH);
+    ofAddListener(gui->newGUIEvent,this,&ofApp::guiEvent);
+    for(int i = 0 ; i < numPattern ; i++)
+    {
+        float tx = (i%col)*(pattenrSapce);
+        float ty = (i/row)*pattenrSapce;
+        for( int i = 0 ; i < numStroke ; i++)
+        {
+            float x = sin(i*(TWO_PI/numStroke))*strokeLength;
+            float y = cos(i*(TWO_PI/numStroke))*strokeLength;
+            ofVec3f v1 = ofVec3f(tx , ty,0);
+            ofVec3f v2 = ofVec3f(tx+x , ty+y,0);
+            mesh.addVertex(v1);
+            mesh.addVertex(v2);
+        }
+    }
+    vbo = mesh;
 }
+void ofApp::guiEvent(ofxUIEventArgs &e)
+{
+	string name = e.getName();
+	int kind = e.getKind();
+	cout << "got event from: " << name << endl;
+    if(name=="NUMPATTERN")
+    {
+        mesh.clear();
+        for(int i = 0 ; i < numPattern ; i++)
+        {
+            for( int j = 0 ; j < numStroke ; j++)
+            {
+                
+                mesh.addVertex(ofVec3f(0,0));
+                mesh.addVertex(ofVec3f(0,0));
+            }
+        }
 
+        vbo = mesh;
+    }
+    if(name=="NUMSTROKE")
+    {
+        mesh.clear();
+        for(int i = 0 ; i < numPattern ; i++)
+        {
+            for( int j = 0 ; j < numStroke ; j++)
+            {
+                
+                mesh.addVertex(ofVec3f(0,0));
+                mesh.addVertex(ofVec3f(0,0));
+            }
+        }
+        vbo = mesh;
+
+    }
+
+
+}
 //--------------------------------------------------------------
 void ofApp::update(){
+    ofSetWindowTitle(ofToString(ofGetFrameRate()));
+    int index = 0;
+    for(int i = 0 ; i < numPattern ; i++)
+    {
+        float tx = (i%col)*(pattenrSapce);
+        float ty = (i/row)*pattenrSapce;
+        float r = ofGetFrameNum()/decay*(((i/row)%2==0)?-1:1);
+        for( int j = 0 ; j < numStroke ; j++)
+        {
+
+            float x = sin(j*(TWO_PI/numStroke)+r)*strokeLength;
+            float y = cos(j*(TWO_PI/numStroke)+r)*strokeLength;
+            ofVec3f v1 = ofVec3f(tx , ty,0);
+            ofVec3f v2 = ofVec3f(tx+x , ty+y,0);
+            mesh.setVertex(index,v1);
+            index++;
+            mesh.setVertex(index,v2);
+            index++;
+        }
+    }
+    vbo = mesh;
 
 }
 
@@ -52,33 +118,9 @@ void ofApp::draw(){
     fbo.begin();
     ofBackground(0,0,0,256);
     ofSetColor(255);
-    for(int i = 0 ; i < numPattern ; i++)
-    {
-        ofPushMatrix();
-        ofTranslate((i%col)*(pattenrSapce), (i/row)*pattenrSapce);
-        ofRotate(ofGetFrameNum()/decay*(((i/row)%2==0)?-1:1), 0, 0, 1);
+    
+    vbo.drawWireframe();
 
-        drawTri(0 ,0);
-        ofPopMatrix();
-    }
-    fbo.end();
-    
-    ofEnableDepthTest();
-    ofPushMatrix();
-    //change origin to center
-    ofTranslate(ofGetWidth()/2, ofGetHeight()/2, 0);
-    
-    //rotate sphere over time
-    ofRotateY(ofGetFrameNum());
-    ofRotateX(-90); //north pole facing up
-    
-    //bind and draw texture
-    fbo.getTextureReference().bind();
-    gluSphere(quadric, 200, 100, 100);
-    fbo.getTextureReference().unbind();
-    ofPopMatrix();
-    ofDisableDepthTest();
-    
 }
 
 //--------------------------------------------------------------
