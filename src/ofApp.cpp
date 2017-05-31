@@ -30,7 +30,15 @@ void ofApp::setup(){
     gui->addIntSlider("PATTERN_SPACE", 0, 400,&pattenrSapce);
     gui->addSlider("decay", 0, 200,&decay);
 
-
+    ofSetVerticalSync(true);
+    
+//    glEnable(GL_DEPTH_TEST); //enable depth comparisons and update the depth buffer
+    ofDisableArbTex(); //needed for textures to work with gluSphere
+    fbo.allocate(ofGetWidth(),ofGetHeight(),GL_RGB);
+    //prepare quadric for sphere
+    quadric = gluNewQuadric();
+    gluQuadricTexture(quadric, GL_TRUE);
+    gluQuadricNormals(quadric, GLU_SMOOTH);
 }
 
 //--------------------------------------------------------------
@@ -40,7 +48,9 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    ofBackground(0);
+    ofBackgroundGradient(ofColor(100,100,100), ofColor(50,50,50));
+    fbo.begin();
+    ofBackground(0,0,0,256);
     ofSetColor(255);
     for(int i = 0 ; i < numPattern ; i++)
     {
@@ -51,7 +61,24 @@ void ofApp::draw(){
         drawTri(0 ,0);
         ofPopMatrix();
     }
-
+    fbo.end();
+    
+    ofEnableDepthTest();
+    ofPushMatrix();
+    //change origin to center
+    ofTranslate(ofGetWidth()/2, ofGetHeight()/2, 0);
+    
+    //rotate sphere over time
+    ofRotateY(ofGetFrameNum());
+    ofRotateX(-90); //north pole facing up
+    
+    //bind and draw texture
+    fbo.getTextureReference().bind();
+    gluSphere(quadric, 200, 100, 100);
+    fbo.getTextureReference().unbind();
+    ofPopMatrix();
+    ofDisableDepthTest();
+    
 }
 
 //--------------------------------------------------------------
